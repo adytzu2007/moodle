@@ -15,21 +15,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
- * Defines the version of vmchecker
+ * Internal library of functions for module vmchecker
  *
- * This code fragment is called by moodle_needs_upgrading() and
- * /admin/index.php
+ * All the vmchecker specific functions, needed to implement the module
+ * logic, should go here. Never include this file from your lib.php!
  *
  * @package    local_vmchecker
- * @copyright  2014 Alex Marin
+ * @copyright  2014 Alex Marin <alex.ukf@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
-
-$module->version   = 2014062802;     	// The current module version (Date: YYYYMMDDXX)
-$module->requires  = 2010031900;      	// Requires this Moodle version
-$module->cron      = 0;               	// Period for cron to check this module (secs)
-$module->component = 'local_vmchecker'; // To check on upgrade, that module sits in correct place
