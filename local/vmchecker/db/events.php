@@ -28,6 +28,6 @@
 $observers = array(
     array(
         'eventname'   => '\mod_assign\event\assessable_submitted',
-        'callback'    => '\local_vmchecker\observer::handle_assessable_submitted',
+        'callback'    => 'local_vmchecker_observer::handle_assessable_submitted',
     ),
 );

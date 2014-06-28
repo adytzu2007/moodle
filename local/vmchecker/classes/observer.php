@@ -22,15 +22,13 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_vmchecker;
-
 defined('MOODLE_INTERNAL') || die();
 
 
 /**
  * Event observer for local_vmchecker.
  */
-class observer {
+class local_vmchecker_observer {
 
     /**
      * Observer for assessable_submitted event.
@@ -39,6 +37,34 @@ class observer {
      * @return void
      */
     public static function handle_assessable_submitted(\mod_assign\event\assessable_submitted $event) {
-        add_to_log(0, "vmchecker", "log", "/", "Assessable submitted event caught!");
+        global $COURSE, $USER, $PAGE;
+
+        // Get the course id and user id
+        $courseid = $COURSE->id;
+        $userid = $USER->id;
+
+        // Get the item instance (the id of the grade_item)
+        $cmid = $PAGE->cm->id;
+        $modinfo = get_fast_modinfo($courseid);
+        $cm = $modinfo->get_cm($cmid);
+        $iteminstance = $cm->instance;
+
+        // There is only one grade
+        $itemnumber = 0;
+
+        // Create the grade_grade object
+        $grade = new stdClass();
+        $grade->feedback = 'Comentarii luate de la vmchecker.';
+        $grade->feedbackformat = 1; // FORMAT_HTML Plain HTML (with some tags stripped)
+        $grade->rawgrade = 81.99; // A fixed grade limited to the grademax column setting in grade_items table
+        $grade->timemodified = time();
+        $grade->userid = $userid;
+        $grade->usermodified = $userid;
+
+        // Automatically gives the assessable a fixed grade
+        $grade_result = grade_update('mod/assign', $courseid, 'mod', 'assign', $iteminstance, $itemnumber, $grade);
+
+        // $grade_result: GRADE_UPDATE_OK = 0, GRADE_UPDATE_FAILED = 1 
+        add_to_log(0, "vmchecker", "log", "/", "Automatic grading of submitted assignment: " . $grade_result);
     }
 }
