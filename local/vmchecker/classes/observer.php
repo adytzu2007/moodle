@@ -53,10 +53,11 @@ class local_vmchecker_observer {
         $itemnumber = 0;
 
         // Create the grade_grade object
+        $vmchecker_results = local_vmchecker_observer::grade_with_vmchecker($event);
         $grade = new stdClass();
-        $grade->feedback = 'Comentarii luate de la vmchecker.';
+        $grade->rawgrade = $vmchecker_results['grade']; 
+        $grade->feedback = $vmchecker_results['feedback'];
         $grade->feedbackformat = 1; // FORMAT_HTML Plain HTML (with some tags stripped)
-        $grade->rawgrade = 81.99; // A fixed grade limited to the grademax column setting in grade_items table
         $grade->timemodified = time();
         $grade->userid = $userid;
         $grade->usermodified = $userid;
@@ -65,6 +66,22 @@ class local_vmchecker_observer {
         $grade_result = grade_update('mod/assign', $courseid, 'mod', 'assign', $iteminstance, $itemnumber, $grade);
 
         // $grade_result: GRADE_UPDATE_OK = 0, GRADE_UPDATE_FAILED = 1 
-        add_to_log(0, "vmchecker", "log", "/", "Automatic grading of submitted assignment: " . $grade_result);
+        add_to_log(0, "vmchecker", "log", "/", "Automatic grading of submitted assignment: " . $grade_result . ".");
+    }
+
+    /**
+     *  Sends a POST request with the assignment to vmchecker and fetches the grade and the feedback.
+     *
+     * @param \mod_assign\event\assessable_submitted $event
+     * @return array An array containing the grade and the feedback from vmchecker.
+     */
+    private static function grade_with_vmchecker(\mod_assign\event\assessable_submitted $event) {
+        // TODO send POST request with assignment
+
+        // TODO fetch grade and feedback
+        $grade = 60.84; // A fixed grade limited to the grademax column setting in grade_items table
+        $feedback = "Vmchecker comments.";
+
+        return array("grade" => $grade, "feedback" => $feedback);
     }
 }
