@@ -29,6 +29,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['curlpostfailed'] = 'The assignment could not be submitted to vmchecker and will be manually graded.';
+$string['curlpostsuccessful'] = 'The assignment was submitted to vmchecker for automatic grading.';
+$string['curluseragent'] = 'Moodle local vmchecker plugin';
 $string['delay'] = 'Delay between requests to the vmchecker service (seconds)';
 $string['delay_help'] = 'If the delay between sending requests and getting results is too short, vmchecker will reject the request.';
 $string['crashnotify'] = 'Crash notification';
