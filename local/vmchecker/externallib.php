@@ -84,14 +84,12 @@ class local_vmchecker_external extends external_api {
                     )
                 );
 
-        echo "<br />=======<Br />"
-            . "grade         | " . $grade . "<br />"
-            . "comments      | " . $comments . "<br />"
-            . "assignment_id | " . $assignment_id . "<br />"
-            . "course_id     | " . $course_id . "<br />"
-            . "user_id       | " . $user_id . "<br />"
-            . "<br />=======<Br />";
-
+        return array(
+           'grade' => $grade,
+           'comments' => $comments,
+           'assignment_id' => $assignment_id,
+           'course_id' => $course_id,
+           'user_id' => $user_id);
         // //Context validation
         // //OPTIONAL but in most web service it should present
         // $context = get_context_instance(CONTEXT_USER, $USER->id);
@@ -105,7 +103,7 @@ class local_vmchecker_external extends external_api {
 
 
         // TODO actual grade
-        exit();
+        return "it worked";
         // local_vmchecker_external::update_grade_and_comments($grade, $comments, $assignment_id, $course_id, $user_id);
     }
 
@@ -195,7 +193,7 @@ class local_vmchecker_external extends external_api {
      * @return external_description
      */
     public static function grade_assignments_returns() {
-        return;
+       return local_vmchecker_external::grade_assignments_parameters();
         // TODO delete
         // return new external_value(PARAM_TEXT, 'The welcome message + user first name');
     }

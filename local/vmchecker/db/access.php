@@ -48,8 +48,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
-/*****************************
-    'local/vmchecker:view' => array(
+    'local/vmchecker:grade' => array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'legacy' => array(
@@ -57,8 +56,7 @@ $capabilities = array(
             'student' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'admin' => CAP_ALLOW
+            'manager' => CAP_ALLOW
         )
     ),
-******************************/
 );

@@ -34,8 +34,9 @@ $functions = array(
 $services = array(
 	'vmchecker_grade_assignments' => array(
 		'functions' => array ('local_vmchecker_grade_assignments'),
-		'requiredcapability' => '',
+		'requiredcapability' => 'local/vmchecker:grade',
 		'restrictedusers' => 0,
 		'enabled' => 1,
+      'shortname' => 'vmchecker',
 	)
 );

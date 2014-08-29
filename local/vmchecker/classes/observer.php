@@ -56,12 +56,12 @@ class local_vmchecker_observer {
 
         // Sends a POST request with the assignment to vmchecker
         $curl = curl_init();
-        // $curl_url = 'http://10.0.2.2:5000/api/submits/';
-        $curl_url = 'http://46.249.77.153:5000/api/submits/';
+        $curl_url = 'http://10.0.2.2:5000/api/submits/';
+        // $curl_url = 'http://46.249.77.153:5000/api/submits/';
 
         // TODO get token - currently not working
         // $token = local_vmchecker_observer::get_token();
-        $token = "1789934fce49a86b583e20ced298ae89";
+        $token = "7fa3c64f4f4b4a24e160b0d11d6bce0e";
 
         // Set the cURL options
         curl_setopt_array($curl, array(
@@ -71,14 +71,17 @@ class local_vmchecker_observer {
             CURLOPT_USERPWD => "admin:123456",
             CURLOPT_POST => 1,
             CURLOPT_POSTFIELDS => array(
-                'callback_data' => array (
-                    'user_id' => $event->userid,
-                    'assignment_id' => $assignment_id,
-                    'course_id' => $course_id,
-                ),
+                'callback_data' => json_encode(array (
+                    1 => array('grade'),
+                    2 => array('comments'),
+                    3 => array('assignment_id', $assignment_id),
+                    4 => array('course_id', $courseid),
+                    5 => array('user_id', $event->userid),
+                ), JSON_NUMERIC_CHECK),
                 'assignment_id' => $assignment_id,
                 'file' => new CurlFile($submission_path, $mimetype),
-                'callback_url' => '/webservice/xmlrpc/server.php?wstoken=' . $token,
+                'callback_url' => new moodle_url('/webservice/xmlrpc/server.php',
+                     array('wstoken' => $token)),
                 'callback_type' => 'xmlrpc',
                 'callback_function' => 'local_vmchecker_grade_assignments',
             )
