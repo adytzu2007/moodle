@@ -46,4 +46,3 @@ $string['vmchecker'] = 'vmchecker';
 $string['pluginadministration'] = 'vmchecker administration';
 $string['pluginname'] = 'vmchecker';
 $string['successfulupgrade'] = 'The vmchecker plugin has been successfully upgraded.';
-

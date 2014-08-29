@@ -23,8 +23,8 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
- 
-   
+
+
 /**
  * Event observer for local_vmchecker.
  */
@@ -37,75 +37,106 @@ class local_vmchecker_observer {
      * @return void
      */
     public static function handle_assessable_submitted(\mod_assign\event\assessable_submitted $event) {
-        global $COURSE, $USER, $PAGE;
+        global $COURSE; //, $USER, $PAGE, $DB;
 
         // Get the course id and user id
         $courseid = $COURSE->id;
-        $userid = $USER->id;
 
-        // Get the item instance (the id of the grade_item)
-        $cmid = $PAGE->cm->id;
-        $modinfo = get_fast_modinfo($courseid);
-        $cm = $modinfo->get_cm($cmid);
-        $iteminstance = $cm->instance;
+        // TODO del - not needed anymore:
+        // $userid = $USER->id;
+        // // Get the item instance (the id of the grade_item)
+        // $cmid = $PAGE->cm->id;
+        // $modinfo = get_fast_modinfo($courseid);
+        // $cm = $modinfo->get_cm($cmid);
+        // $iteminstance = $cm->instance;
 
-        // There is only one grade
-        $itemnumber = 0;
 
-        // Create the grade_grade object
-        $status = local_vmchecker_observer::grade_with_vmchecker($event);
-        $grade = new stdClass();
-        // $grade->rawgrade = 8.88;
-        $grade->feedback = $status;
-        $grade->feedbackformat = 1; // FORMAT_HTML - Plain HTML with some tags stripped
-        $grade->timemodified = time();
-        $grade->userid = $userid;
-        $grade->usermodified = $userid;
-
-        // Automatically gives the assessable a fixed grade
-        $grade_result = grade_update('mod/assign', $courseid, 'mod', 'assign', $iteminstance, $itemnumber, $grade);
-
-        // $grade_result: GRADE_UPDATE_OK = 0, GRADE_UPDATE_FAILED = 1 
-        add_to_log(0, "vmchecker", "log", "/", "Assignment submitted for automatic grading "
-            . "(0 - OK, 1 - FAILED): " . $grade_result . ".");
-    }
-
-    /**
-     *  Sends a POST request with the assignment to vmchecker
-     *
-     * @param \mod_assign\event\assessable_submitted $event
-     * @return 
-     */
-    private static function grade_with_vmchecker(\mod_assign\event\assessable_submitted $event) {
         // Get the assignment details from the database
         list($assignment_id, $submission_path, $mimetype) = local_vmchecker_observer::get_submission_details($event);
 
+        // Sends a POST request with the assignment to vmchecker
         $curl = curl_init();
-        $curl_url = 'http://86.127.147.139:5000/v1/submits/';
-        // $curl_url = 'http://localhost/test_post.php';
+        // $curl_url = 'http://10.0.2.2:5000/api/submits/';
+        $curl_url = 'http://46.249.77.153:5000/api/submits/';
+
+        // TODO get token - currently not working
+        // $token = local_vmchecker_observer::get_token();
+        $token = "1789934fce49a86b583e20ced298ae89";
 
         // Set the cURL options
         curl_setopt_array($curl, array(
+            CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_URL => $curl_url,
             CURLOPT_USERAGENT => get_string('curluseragent', 'local_vmchecker'),
+            CURLOPT_USERPWD => "admin:123456",
             CURLOPT_POST => 1,
             CURLOPT_POSTFIELDS => array(
-                'user_id' => $event->userid,
+                'callback_data' => array (
+                    'user_id' => $event->userid,
+                    'assignment_id' => $assignment_id,
+                    'course_id' => $course_id,
+                ),
                 'assignment_id' => $assignment_id,
                 'file' => new CurlFile($submission_path, $mimetype),
+                'callback_url' => '/webservice/xmlrpc/server.php?wstoken=' . $token,
+                'callback_type' => 'xmlrpc',
+                'callback_function' => 'local_vmchecker_grade_assignments',
             )
         ));
 
         // Send the request
-        $sent_assignment = curl_exec($curl);
+        $curl_response = curl_exec($curl);
         // Close the handler
         curl_close($curl);
 
-        if ($sent_assignment) {
-            return get_string('curlpostsuccessful', 'local_vmchecker');
-        } else {
-            return get_string('curlpostfailed', 'local_vmchecker');
-        }
+        // TODO del
+        echo "<pre>";
+        print_r($curl_response);
+        echo "</pre>";
+
+        // // Decode the response from vmchecker
+        // $results = json_decode($curl_response);
+        // return array($results->grade, $results->comments);
+
+        // if ($sent_assignment) {
+        //     return get_string('curlpostsuccessful', 'local_vmchecker');
+        // } else {
+        //     return get_string('curlpostfailed', 'local_vmchecker');
+        // }
+    }
+
+    /**
+     *  Gets the user token
+     *
+     * @return string The token used for authentication
+     */
+    private static function get_token() {
+        $curl = curl_init();
+        $curl_url = "https://localhost:8080/moodle/login/token.php?username=vmchecker&password=Vmch3ckr!&service=vmchecker_grade_assignments";
+
+        // Set the cURL options
+        curl_setopt_array($curl, array(
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_URL => $curl_url,
+            CURLOPT_USERAGENT => get_string('curluseragent', 'local_vmchecker'),
+        ));
+
+        // Send the request
+        $curl_response = curl_exec($curl);
+
+        // TODO del debug info
+        echo "<pre>tokenresponse: <br />";
+        print_r($curl_response);
+        echo "end";
+        echo "</pre>";
+
+        // Close the handler
+        curl_close($curl);
+
+        // TODO extract and return token
+        // $results = json_decode($curl_response);
+        // $token = $results->token;
+        // return $token;
     }
 
     /**
@@ -129,8 +160,8 @@ class local_vmchecker_observer {
         // Get the submission details from the files table
         $FILES_TABLE = "files";
         $submission_details = $DB->get_records_sql(
-            'SELECT id, contenthash, mimetype' 
-            . ' FROM {' . $FILES_TABLE . '}' 
+            'SELECT id, contenthash, mimetype'
+            . ' FROM {' . $FILES_TABLE . '}'
             . ' WHERE contextid = ' . $event->contextid
             . ' AND itemid = ' . $event->objectid
             . ' AND userid = ' . $event->userid
@@ -140,7 +171,7 @@ class local_vmchecker_observer {
 
         // There may be multiple assignments that match, make sure to get the latest one
         $last_record = $submission_details[max(array_keys($submission_details))];
-        
+
         // Compute the full filepath of the assignment
         $submission_path = $CFG->dataroot . "/filedir/"
             . substr($last_record->contenthash, 0, 2) . "/"

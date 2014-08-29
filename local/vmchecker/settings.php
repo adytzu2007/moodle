@@ -29,21 +29,21 @@
 defined('MOODLE_INTERNAL') || die;
 
 // Required condition
-if ($hassiteconfig) { 
+if ($hassiteconfig) {
     $settingnode = new admin_settingpage('vmchecker', get_string('pluginname', 'local_vmchecker'));
 
     $settingnode->add(new admin_setting_configtext(
-    	'local_vmchecker/delay', 
-    	get_string('delay', 'local_vmchecker'), 
-    	get_string('delay_help', 'local_vmchecker'), 
-    	10, 
+    	'local_vmchecker/delay',
+    	get_string('delay', 'local_vmchecker'),
+    	get_string('delay_help', 'local_vmchecker'),
+    	10,
     	PARAM_INT));
 
     $settingnode->add(new admin_setting_users_with_capability(
-    	'local_vmchecker/crashnotify', 
-    	get_string('crashnotify', 'local_vmchecker'), 
-    	get_string('crashnotify_help', 'local_vmchecker'), 
-    	array(), 
+    	'local_vmchecker/crashnotify',
+    	get_string('crashnotify', 'local_vmchecker'),
+    	get_string('crashnotify_help', 'local_vmchecker'),
+    	array(),
     	'moodle/site:config'));
 
     $ADMIN->add('localplugins', $settingnode);
