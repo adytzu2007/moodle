@@ -1,0 +1,4 @@
+for the webservice to work for common students, the following capabilities
+must be added to the student role :
+    moodle/webservice:createtoken
+    webservice/xmlrpc:use
