@@ -37,10 +37,7 @@ class local_vmchecker_observer {
      * @return void
      */
     public static function handle_assessable_submitted(\mod_assign\event\assessable_submitted $event) {
-        global $COURSE; //, $USER, $PAGE, $DB;
-
-        // Get the course id and user id
-        $courseid = $COURSE->id;
+        global $COURSE, $USER; //, $USER, $PAGE, $DB;
 
         // TODO del - not needed anymore:
         // $userid = $USER->id;
@@ -59,9 +56,24 @@ class local_vmchecker_observer {
         $curl_url = 'http://10.0.2.2:5000/api/submits/';
         // $curl_url = 'http://46.249.77.153:5000/api/submits/';
 
-        // TODO get token - currently not working
-        // $token = local_vmchecker_observer::get_token();
-        $token = "7fa3c64f4f4b4a24e160b0d11d6bce0e";
+        $post_data = array(
+            'assignment_id' => $assignment_id,
+            'file' => new CurlFile($submission_path, $mimetype),
+        );
+
+        $token = local_vmchecker_observer::get_token();
+        //$token = new stdclass;
+        //$token->token = '1d09033a550f4483ba4870ddf75556c1';
+        if ($token != null) {
+            $post_data['callback_data'] = json_encode(array(
+                'assignment_id' => $assignment_id,
+                'course_id' => $COURSE->id,
+            ), JSON_NUMERIC_CHECK);
+            $post_data['callback_url'] = new moodle_url(
+                '/webservice/xmlrpc/server.php', array('wstoken' => $token->token));
+            $post_data['callback_type'] = 'xmlrpc';
+            $post_data['callback_fn'] = 'local_vmchecker_grade_assignment';
+        }
 
         // Set the cURL options
         curl_setopt_array($curl, array(
@@ -70,21 +82,7 @@ class local_vmchecker_observer {
             CURLOPT_USERAGENT => get_string('curluseragent', 'local_vmchecker'),
             CURLOPT_USERPWD => "admin:123456",
             CURLOPT_POST => 1,
-            CURLOPT_POSTFIELDS => array(
-                'callback_data' => json_encode(array (
-                    1 => array('grade'),
-                    2 => array('comments'),
-                    3 => array('assignment_id', $assignment_id),
-                    4 => array('course_id', $courseid),
-                    5 => array('user_id', $event->userid),
-                ), JSON_NUMERIC_CHECK),
-                'assignment_id' => $assignment_id,
-                'file' => new CurlFile($submission_path, $mimetype),
-                'callback_url' => new moodle_url('/webservice/xmlrpc/server.php',
-                     array('wstoken' => $token)),
-                'callback_type' => 'xmlrpc',
-                'callback_function' => 'local_vmchecker_grade_assignments',
-            )
+            CURLOPT_POSTFIELDS => $post_data
         ));
 
         // Send the request
@@ -114,6 +112,67 @@ class local_vmchecker_observer {
      * @return string The token used for authentication
      */
     private static function get_token() {
+        global $USER, $COURSE, $DB;
+
+        $service = $DB->get_record('external_services', array('shortname' => 'vmchecker', 'enabled' => 1));
+        if (empty($service)) {
+            echo '<pre>There is no vmchecker web service</pre>';
+            // if the external service is not found or if it doesn't exist then
+            // we don't support asynchronous results
+            return null;
+        }
+
+        if (!has_capability($service->requiredcapability,
+                            context_course::instance($COURSE->id),
+                            $USER)) {
+            echo '<pre>The current user doesn\'t have acces to the webservice</pre>';
+            return null;
+        }
+
+        if (!has_capability('moodle/webservice:createtoken',
+                            context_course::instance($COURSE->id),
+                            $USER)) {
+            echo '<pre>The current user can\'t create tokens</pre>';
+        }
+
+        $service_record = $DB->get_record(
+            'external_services', array(
+                'shortname'=>'vmchecker',
+                'enabled'=>1),
+            '*',
+            MUST_EXIST);
+
+        // Create a new token.
+        $token = new stdClass;
+        // TODO check why openssl_* functions are not present
+        // because we need a cryptographically safe function
+        //$token_bytes = openssl_random_pseudobytes(64, true);
+        //$token->token = bin2hex($token_bytes);
+        $token->token = hash('sha256', uniqid(rand(), 1));
+        $token->userid = $USER->id;
+        $token->tokentype = EXTERNAL_TOKEN_PERMANENT;
+        $token->contextid = context_course::instance($COURSE->id)->id;
+        $token->creatorid = $USER->id;
+        $token->timecreated = time();
+        $token->externalserviceid = $service_record->id;
+        // the token is valid for, at most, one day
+        $token->validuntil = $token->timecreated + DAYSECS;
+        $token->id = $DB->insert_record('external_tokens', $token);
+
+        $params = array(
+            'objectid' => $token->id,
+            'relateduserid' => $USER->id,
+            'other' => array(
+                'auto' => true
+            )
+        );
+
+        $event = \core\event\webservice_token_created::create($params);
+        $event->add_record_snapshot('external_tokens', $token);
+        $event->trigger();
+
+        return $token;
+       /*
         $curl = curl_init();
         $curl_url = "https://localhost:8080/moodle/login/token.php?username=vmchecker&password=Vmch3ckr!&service=vmchecker_grade_assignments";
 
@@ -140,6 +199,7 @@ class local_vmchecker_observer {
         // $results = json_decode($curl_response);
         // $token = $results->token;
         // return $token;
+         */
     }
 
     /**
