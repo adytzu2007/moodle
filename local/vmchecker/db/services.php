@@ -21,9 +21,9 @@
 
 // Define the web service functions to install.
 $functions = array(
-	'local_vmchecker_grade_assignments' => array(
+	'local_vmchecker_grade_assignment' => array(
 		'classname' => 'local_vmchecker_external',
-		'methodname' => 'grade_assignments',
+		'methodname' => 'grade_assignment',
 		'classpath' => 'local/vmchecker/externallib.php',
 		'description' => 'Updates the grade and comments of an assignment using the results provided by the client.',
 		'type' => 'write',
@@ -33,7 +33,7 @@ $functions = array(
 // Define the services to install as pre-build services. A pre-build service is not editable by administrators.
 $services = array(
 	'vmchecker_grade_assignments' => array(
-		'functions' => array ('local_vmchecker_grade_assignments'),
+		'functions' => array ('local_vmchecker_grade_assignment'),
 		'requiredcapability' => 'local/vmchecker:grade',
 		'restrictedusers' => 0,
 		'enabled' => 1,

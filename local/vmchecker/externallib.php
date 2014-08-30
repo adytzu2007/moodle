@@ -28,68 +28,54 @@ class local_vmchecker_external extends external_api {
      * Returns description of method parameters
      * @return external_function_parameters
      */
-    public static function grade_assignments_parameters() {
+    public static function grade_assignment_parameters() {
         return new external_function_parameters(
-                array(
-                    'grade' => new external_value(
-                        PARAM_INT,
-                        'The assigned grade.',
-                        VALUE_DEFAULT,
-                        0
-                    ),
-                    'comments' => new external_value(
-                        PARAM_TEXT,
-                        'The comments associated with the grade.',
-                        VALUE_DEFAULT,
-                        ''
-                    ),
-                    'assignment_id' => new external_value(
-                        PARAM_INT,
-                        'The assignment id.',
-                        VALUE_DEFAULT,
-                        0
-                    ),
-                    'course_id' => new external_value(
-                        PARAM_INT,
-                        'The assignment id.',
-                        VALUE_DEFAULT,
-                        0
-                    ),
-                    'user_id' => new external_value(
-                        PARAM_INT,
-                        'The user id.',
-                        VALUE_DEFAULT,
-                        0
-                    ),
-                )
+            array(
+                'grade' => new external_value(
+                    PARAM_INT,
+                    'The assigned grade.',
+                    VALUE_REQUIRED
+                ),
+                'comments' => new external_value(
+                    PARAM_TEXT,
+                    'The comments associated with the grade.',
+                    VALUE_REQUIRED
+                ),
+                'callback_data' => new external_value(
+                    PARAM_TEXT,
+                    'Data that must be sent back to identify the submission.',
+                    VALUE_REQUIRED
+                ),
+            )
         );
     }
 
     /**
      * Updates the grade and comments for an assignment.
      */
-    public static function grade_assignments($grade, $comments, $assignment_id, $course_id, $user_id) {
-        global $USER;
+    public static function grade_assignment($grade, $comments, $callback_data) {
+        global $USER, $DB;
 
         //Parameter validation
         //REQUIRED
         $params = self::validate_parameters(
-                    self::grade_assignments_parameters(),
-                    array(
-                        'grade' => $grade,
-                        'comments' => $comments,
-                        'assignment_id' => $assignment_id,
-                        'course_id' => $course_id,
-                        'user_id' => $user_id,
-                    )
-                );
+            self::grade_assignment_parameters(),
+            array(
+                'grade' => $grade,
+                'comments' => $comments,
+                'callback_data' => $callback_data
+            )
+        );
+
+        $callback_data = json_decode($callback_data);
+        $DB->delete_records('external_tokens', array('token' => $_GET['wstoken']));
 
         return array(
-           'grade' => $grade,
-           'comments' => $comments,
-           'assignment_id' => $assignment_id,
-           'course_id' => $course_id,
-           'user_id' => $user_id);
+            'grade' => $grade,
+            'comments' => $comments,
+            'assignment_id' => $callback_data->assignment_id,
+            'course_id' => $callback_data->course_id
+        );
         // //Context validation
         // //OPTIONAL but in most web service it should present
         // $context = get_context_instance(CONTEXT_USER, $USER->id);
@@ -103,7 +89,6 @@ class local_vmchecker_external extends external_api {
 
 
         // TODO actual grade
-        return "it worked";
         // local_vmchecker_external::update_grade_and_comments($grade, $comments, $assignment_id, $course_id, $user_id);
     }
 
@@ -192,10 +177,19 @@ class local_vmchecker_external extends external_api {
      * Returns description of method result value
      * @return external_description
      */
-    public static function grade_assignments_returns() {
-       return local_vmchecker_external::grade_assignments_parameters();
-        // TODO delete
-        // return new external_value(PARAM_TEXT, 'The welcome message + user first name');
+    public static function grade_assignment_returns() {
+        return new external_function_parameters(
+            array(
+                'grade' => new external_value(
+                    PARAM_INT, 'The assigned grade.', VALUE_REQUIRED),
+                'comments' => new external_value(
+                    PARAM_TEXT, 'The comments associated with the grade.',
+                    VALUE_REQUIRED),
+                'assignment_id' => new external_value(
+                    PARAM_INT, 'The assignment id.', VALUE_REQUIRED),
+                'course_id' => new external_value(
+                    PARAM_INT, 'The assignment id.', VALUE_REQUIRED),
+            )
+        );
     }
-
 }
