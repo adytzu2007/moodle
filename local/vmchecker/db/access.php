@@ -49,7 +49,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
     'local/vmchecker:grade' => array(
-        'captype' => 'read',
+        'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
         'legacy' => array(
             'guest' => CAP_ALLOW,

@@ -56,8 +56,7 @@ class local_vmchecker_external extends external_api {
     public static function grade_assignment($grade, $comments, $callback_data) {
         global $USER, $DB;
 
-        //Parameter validation
-        //REQUIRED
+        // REQUIRED: Parameter validation
         $params = self::validate_parameters(
             self::grade_assignment_parameters(),
             array(
@@ -70,36 +69,37 @@ class local_vmchecker_external extends external_api {
         $callback_data = json_decode($callback_data);
         $DB->delete_records('external_tokens', array('token' => $_GET['wstoken']));
 
+
+        // OPTIONAL but in most web service it should present
+        $context = get_context_instance(CONTEXT_USER, $USER->id);
+        self::validate_context($context);
+
+        // // OPTIONAL but in most web service it should present
+        // if (! has_capability('moodle/grade:edit', $context)) {
+        //     throw new moodle_exception('cannot edit grade');
+        // }
+
+        // Insert the grade and comments into the database
+        local_vmchecker_external::update_grade_and_comments($grade, $comments,
+            $callback_data['iteminstance'], $callback_data['course_id']);
+
         return array(
             'grade' => $grade,
             'comments' => $comments,
             'assignment_id' => $callback_data->assignment_id,
             'course_id' => $callback_data->course_id
         );
-        // //Context validation
-        // //OPTIONAL but in most web service it should present
-        // $context = get_context_instance(CONTEXT_USER, $USER->id);
-        // self::validate_context($context);
-
-        // //Capability checking
-        // //OPTIONAL but in most web service it should present
-        // if (! has_capability('moodle/user:viewdetails', $context)) {
-        //     throw new moodle_exception('cannotviewprofile');
-        // }
-
-
-        // TODO actual grade
-        // local_vmchecker_external::update_grade_and_comments($grade, $comments, $assignment_id, $course_id, $user_id);
     }
 
 
     /**
      * Actually does the update of the grade and comments
      */
-    public static function update_grade_and_comments($grade_value, $feedback, $iteminstance, $course_id, $userid) {
-        global $DB; // TODO - check if this is ok
+    public static function update_grade_and_comments($grade_value, $feedback, $iteminstance, $course_id) {
+        global $DB, $USER;
 
         // Create the grade_grade object
+        $userid = $USER->id;
         $grade = new stdClass();
         $grade->rawgrade = $grade_value;
         $grade->feedback = $feedback;
@@ -120,11 +120,6 @@ class local_vmchecker_external extends external_api {
         if ($assignment = $DB->get_record_sql($sql)) {
             assign_grade_item_update($assignment, $grade);
         }
-
-        // // Automatically gives the assessable a fixed grade - #2
-        // // There is only one grade
-        // $itemnumber = 0;
-        // $grade_result = grade_update('mod/assign', $courseid, 'mod', 'assign', $iteminstance, $itemnumber, $grade);
 
         // Update grade and comments for the submitted assignment
         $GRADES_TABLE = 'assign_grades';

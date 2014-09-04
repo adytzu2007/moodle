@@ -37,16 +37,13 @@ class local_vmchecker_observer {
      * @return void
      */
     public static function handle_assessable_submitted(\mod_assign\event\assessable_submitted $event) {
-        global $COURSE, $USER; //, $USER, $PAGE, $DB;
+        global $COURSE, $PAGE;
 
-        // TODO del - not needed anymore:
-        // $userid = $USER->id;
-        // // Get the item instance (the id of the grade_item)
-        // $cmid = $PAGE->cm->id;
-        // $modinfo = get_fast_modinfo($courseid);
-        // $cm = $modinfo->get_cm($cmid);
-        // $iteminstance = $cm->instance;
-
+        // Get the item instance (the id of the grade_item)
+        $cmid = $PAGE->cm->id;
+        $modinfo = get_fast_modinfo($COURSE->id);
+        $cm = $modinfo->get_cm($cmid);
+        $iteminstance = $cm->instance;
 
         // Get the assignment details from the database
         list($assignment_id, $submission_path, $mimetype) = local_vmchecker_observer::get_submission_details($event);
@@ -54,7 +51,6 @@ class local_vmchecker_observer {
         // Sends a POST request with the assignment to vmchecker
         $curl = curl_init();
         $curl_url = 'http://10.0.2.2:5000/api/submits/';
-        // $curl_url = 'http://46.249.77.153:5000/api/submits/';
 
         $post_data = array(
             'assignment_id' => $assignment_id,
@@ -62,11 +58,9 @@ class local_vmchecker_observer {
         );
 
         $token = local_vmchecker_observer::get_token();
-        //$token = new stdclass;
-        //$token->token = '1d09033a550f4483ba4870ddf75556c1';
         if ($token != null) {
             $post_data['callback_data'] = json_encode(array(
-                'assignment_id' => $assignment_id,
+                'iteminstance' => $iteminstance,
                 'course_id' => $COURSE->id,
             ), JSON_NUMERIC_CHECK);
             $post_data['callback_url'] = new moodle_url(
@@ -86,24 +80,9 @@ class local_vmchecker_observer {
         ));
 
         // Send the request
-        $curl_response = curl_exec($curl);
+        curl_exec($curl);
         // Close the handler
         curl_close($curl);
-
-        // TODO del
-        echo "<pre>";
-        print_r($curl_response);
-        echo "</pre>";
-
-        // // Decode the response from vmchecker
-        // $results = json_decode($curl_response);
-        // return array($results->grade, $results->comments);
-
-        // if ($sent_assignment) {
-        //     return get_string('curlpostsuccessful', 'local_vmchecker');
-        // } else {
-        //     return get_string('curlpostfailed', 'local_vmchecker');
-        // }
     }
 
     /**
@@ -172,34 +151,6 @@ class local_vmchecker_observer {
         $event->trigger();
 
         return $token;
-       /*
-        $curl = curl_init();
-        $curl_url = "https://localhost:8080/moodle/login/token.php?username=vmchecker&password=Vmch3ckr!&service=vmchecker_grade_assignments";
-
-        // Set the cURL options
-        curl_setopt_array($curl, array(
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_URL => $curl_url,
-            CURLOPT_USERAGENT => get_string('curluseragent', 'local_vmchecker'),
-        ));
-
-        // Send the request
-        $curl_response = curl_exec($curl);
-
-        // TODO del debug info
-        echo "<pre>tokenresponse: <br />";
-        print_r($curl_response);
-        echo "end";
-        echo "</pre>";
-
-        // Close the handler
-        curl_close($curl);
-
-        // TODO extract and return token
-        // $results = json_decode($curl_response);
-        // $token = $results->token;
-        // return $token;
-         */
     }
 
     /**
