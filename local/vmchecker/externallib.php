@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once($CFG->libdir . "/externallib.php");
+require_once($CFG->dirroot . "/mod/assign/lib.php");
 
 class local_vmchecker_external extends external_api {
 
@@ -72,7 +73,7 @@ class local_vmchecker_external extends external_api {
 
         // OPTIONAL but in most web service it should present
         $context = get_context_instance(CONTEXT_USER, $USER->id);
-        self::validate_context($context);
+        //self::validate_context($context);
 
         // // OPTIONAL but in most web service it should present
         // if (! has_capability('moodle/grade:edit', $context)) {
@@ -81,12 +82,12 @@ class local_vmchecker_external extends external_api {
 
         // Insert the grade and comments into the database
         local_vmchecker_external::update_grade_and_comments($grade, $comments,
-            $callback_data['iteminstance'], $callback_data['course_id']);
+            $callback_data->iteminstance, $callback_data->course_id);
 
         return array(
             'grade' => $grade,
             'comments' => $comments,
-            'assignment_id' => $callback_data->assignment_id,
+            'iteminstance' => $callback_data->iteminstance,
             'course_id' => $callback_data->course_id
         );
     }
@@ -180,7 +181,7 @@ class local_vmchecker_external extends external_api {
                 'comments' => new external_value(
                     PARAM_TEXT, 'The comments associated with the grade.',
                     VALUE_REQUIRED),
-                'assignment_id' => new external_value(
+                'iteminstance' => new external_value(
                     PARAM_INT, 'The assignment id.', VALUE_REQUIRED),
                 'course_id' => new external_value(
                     PARAM_INT, 'The assignment id.', VALUE_REQUIRED),

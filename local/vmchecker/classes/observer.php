@@ -37,7 +37,7 @@ class local_vmchecker_observer {
      * @return void
      */
     public static function handle_assessable_submitted(\mod_assign\event\assessable_submitted $event) {
-        global $COURSE, $PAGE;
+        global $COURSE, $USER, $PAGE, $DB;
 
         // Get the item instance (the id of the grade_item)
         $cmid = $PAGE->cm->id;
@@ -80,7 +80,13 @@ class local_vmchecker_observer {
         ));
 
         // Send the request
-        curl_exec($curl);
+        $curl_response = curl_exec($curl);
+
+	// TODO del
+        echo "<pre>";
+        print_r($curl_response);
+        echo "</pre>";
+
         // Close the handler
         curl_close($curl);
     }
