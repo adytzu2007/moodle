@@ -80,13 +80,7 @@ class local_vmchecker_observer {
         ));
 
         // Send the request
-        $curl_response = curl_exec($curl);
-
-	// TODO del
-        echo "<pre>";
-        print_r($curl_response);
-        echo "</pre>";
-
+        curl_exec($curl);
         // Close the handler
         curl_close($curl);
     }
